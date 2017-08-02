@@ -99,4 +99,60 @@ Lets see an example to see the Class loaders:
 		}
 	}
 
+Using URL classloader
+---------------------
+URL classloader is used to load classes. Let's make a jar out of the helper class explained in classpath section above. This program will demonstrate how to load that class using URLClassLoader.
+
+	import java.net.MalformedURLException;
+	import java.net.URL;
+	import java.net.URLClassLoader;
+
+	public class URLClassLoaderDemo {
+		public static void main(String[] args) {
+			URL url = null;
+			try {
+				url = new URL("file:///c:/lib/helper.jar");
+				URLClassLoader ucl = new URLClassLoader(new URL[]{url});
+				Class clazz=ucl.loadClass("sample.helper.Helper");
+				Object obj=clazz.newInstance();
+				System.out.println(obj.toString());
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+*****	
+Note: clazz.newInstance() is returning type of Object. We should not typecast that to sample.helper.Helper. If we use the actual type, it defeats the whole purpose of URLClassLoader because it uses application class loader to load the type.
+
+*****
+Note: The problem with the above approach of using our own class loader is, we cannot invoke any method present in the class that is loaded, because the return type is object. If we try invoke using cast it will be loaded using application class loader as mentioned above. so, the alternative to the above problem is to split the code into implementation and interface, so that Interface definitions go on the classpath and implementation is loaded through classpath. Let's see an example.
+
+Let's write an interface.
+
+	package sample.helper;
+	public interface IHelper {
+		public String getMessage();
+	}
+
+create a jar file from the above and name it as interfaces.jar.
+
+Let's modify Helper class to implement IHelper. Now to compile Helper, we need interfaces.jar in the classpath. The command is,
+
+javac -cp /path/to/interfaces.jar -d classes -sourcepath src C:\Users\damart1\Documents\evaluation_test\sample\src\main\java\sample\helper\Helper.java
+
+Now modify the class loader program to cast the object to IHelper type.
+	
+	IHelper obj= (IHelper) clazz.newInstance();
+	System.out.println(obj.getMessage());
+
+To run the program,
+java -cp /path/to/interfaces.jar sample.main.URLClassLoaderDemo
+
 	

@@ -147,6 +147,8 @@ Let's modify Helper class to implement IHelper. Now to compile Helper, we need i
 
 javac -cp /path/to/interfaces.jar -d classes -sourcepath src C:\Users\damart1\Documents\evaluation_test\sample\src\main\java\sample\helper\Helper.java
 
+Now re-create helper.jar with modified Helper.class.
+
 Now modify the class loader program to cast the object to IHelper type.
 	
 	IHelper obj= (IHelper) clazz.newInstance();
@@ -155,4 +157,75 @@ Now modify the class loader program to cast the object to IHelper type.
 To run the program,
 java -cp /path/to/interfaces.jar sample.main.URLClassLoaderDemo
 
-	
+Writing custom class loader
+---------------------------
+When writing custom class loader few points need to be considered.
+1)custom classloader can't load all classes that application needs, it may delegate to the system classloader. (system classloader means to application, extension or bootstrap classloaders)
+2)If the system classloader can't load the class, then our custom classloader has to load the class bytes from the external location(either from DB or file system)
+
+Let's write an example which will load bytes from a file system. Few key points to note when writing custom classloader.
+
+1)Write a class that extends java.lang.ClassLoader and overwrite findClass() method.
+2)findClass() method should first give a chance to System classloader to load the class.
+3)If system classloader can't load the class, then load the class bytes from external location(file system, DB etc)
+4)once bytes are loaded, invoke defineClass() method present in java.lang.ClassLoader
+
+Here is the code.
+
+	package sample.main.classloaders;
+
+	import java.io.File;
+	import java.io.FileInputStream;
+	import java.io.FileNotFoundException;
+	import java.io.IOException;
+
+	public class FileClassLoader extends ClassLoader {
+
+		private ClassLoader parent;
+		private String location;
+
+		public FileClassLoader(String location) {
+			this(ClassLoader.getSystemClassLoader(), location);
+		}
+
+		public FileClassLoader(ClassLoader parent, String location) {
+			super(parent);
+			this.parent = parent;
+			this.location = location;
+		}
+
+		@Override
+		public Class<?> findClass(String name) throws ClassNotFoundException {
+			Class cls = null;
+			try{
+				cls = parent.loadClass(name);
+			}catch (ClassNotFoundException cnfe) {
+				byte[] classBytes= loadClassFromFileSystem(name);
+				return defineClass(name, classBytes, 0, classBytes.length);
+			}
+			return cls;
+		}
+
+		private byte[] loadClassFromFileSystem(String location) {
+			File file = new File(location);
+			FileInputStream fis=null;
+			byte[] classBytes = null;
+			try {
+				try {
+					fis = new FileInputStream(file);
+					classBytes = new byte[fis.available()];
+					fis.read(classBytes);
+				} finally {
+					if(fis != null){
+						fis.close();
+					}
+				}
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return classBytes;
+		}
+
+	}

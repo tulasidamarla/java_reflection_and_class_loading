@@ -258,7 +258,7 @@ Here is an example:
 			System.out.printf("clazz == clazz2 %b\n", clazz == clazz2);
 			System.out.printf("obj.class == obj2.class %b\n", obj.getClass() == obj2.getClass());
 
-Note: As per the demo, The output is false, because classloaders are different, the Class references should be different objects. But, My program o/p is true. Need to investigate into this more.
+Note: As per the demo, The output is false, because classloaders are different, the Class references should be different. 
 
 Implementing Factory Pattern using Java classloading
 ----------------------------------------------------
@@ -386,5 +386,50 @@ Hot Deployement
 ---------------
 Classloaders give the ability to reload classes dynamically. Classloaders can also load new classes into the application without having to unload the application.
 
+Let's write the server program:
 
+	public interface IServer {
+		public String getQuote();
+	}
+	
+	public class ServerImpl implements IServer {
+		public String getQuote() {
+			return "When the going gets tough, the tough gets going, When the going gets rought, the tough gets rough";
+		}
+	}
 
+Let's create a jar file with the above two and name it as server.jar.
+
+Let's see the client program which loads the ServerImpl class from the jar using URLClassLoader.
+
+	public class HotDeploymentDemoClient {
+		
+		private static ClassLoader cl;
+		private static IServer server;
+		
+		public static void reloadServer() throws Exception{
+			URL[] urls= new URL[]{new URL("file:///c:/lib/server.jar")};
+			cl = new URLClassLoader(urls);
+			server = (IServer) cl.loadClass("sample.hotdeployment.ServerImpl").newInstance();
+		}
+
+		public static void main(String[] args) throws Exception {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+			reloadServer();
+			while(true){
+				System.out.println("Enter QUOTE, RELOAD or QUIT");
+				String command = reader.readLine();
+				if(command.toUpperCase().equals("QUIT")){
+					return;
+				}else if(command.toUpperCase().equals("QUOTE")){
+					System.out.println(server.getQuote());
+				} else if(command.toUpperCase().equals("RELOAD")){
+					reloadServer();
+				}
+			}
+		}
+	}
+
+Note: The above program takes user input to print Quote, or reload the ServerImpl class or to Quit. Print the quote first and then change the ServerImpl file and recompile and rejar and overwrite the jar into the same location. Now give reload command to the client program followed by quote to see your changes.
+
+	

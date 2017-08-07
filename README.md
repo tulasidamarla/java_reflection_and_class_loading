@@ -229,3 +229,162 @@ Here is the code.
 		}
 
 	}
+
+Loading different versions of Same Class
+----------------------------------------
+Loading different versions of same class is also called side by side deployment.
+
+Note: There may different reasons for doing side by side deployment. For example, your IDE may have different versions of XML Parsers. Each version may load different version of the same class.
+
+Class loaders provide isolation. i.e. Two class loaders can load two different versions of the same class.
+
+Class.forName()
+---------------
+Class.forName() loads the class by taking the name of the class as a parameter. It also has  additional parameter which takes a boolean value(whether to define the class or not) and a thrid parameter which takes a classloader to load the class with.
+
+Here is an example:
+
+			URL url = new URL("file:///c:/lib/helper.jar");
+			
+			URLClassLoader ucl = new URLClassLoader(new URL[]{url});
+			Class clazz= Class.forName("sample.helper.Helper",true,ucl);
+			IHelper obj= (IHelper) clazz.newInstance();
+			
+			URL url2 = new URL("file:///c:/lib/helper.jar");
+			URLClassLoader ucl2 = new URLClassLoader(new URL[]{url2});
+			Class clazz2 = Class.forName("sample.helper.Helper",true,ucl2);
+			IHelper obj2= (IHelper) clazz2.newInstance();
+
+			System.out.printf("clazz == clazz2 %b\n", clazz == clazz2);
+			System.out.printf("obj.class == obj2.class %b\n", obj.getClass() == obj2.getClass());
+
+Note: As per the demo, The output is false, because classloaders are different, the Class references should be different objects. But, My program o/p is true. Need to investigate into this more.
+
+Implementing Factory Pattern using Java classloading
+----------------------------------------------------
+Factory pattern is a constructor pattern. Here is the sample code of Abstract factory pattern.
+
+	public interface ICameraFactory {
+		ICamera createCamera();
+	}
+
+	public interface ICamera {
+		void takePhoto();
+	}
+
+	public class NikonCameraFactory implements ICameraFactory {
+		public ICamera createCamera() {
+			return new NikonCamera();
+		}
+	}	
+
+	public class CanonCameraFactory implements ICameraFactory {
+		public ICamera createCamera() {
+			return new CanonCamera();
+		}
+	}
+
+	public class NikonCamera implements ICamera {
+		public void takePhoto() {
+			System.out.println("Nikon photo taken");
+		}
+	}
+
+	public class CanonCamera implements ICamera {
+		public void takePhoto() {
+			System.out.println("Canon photo taken");
+		}
+	}
+
+	public class FactoryPatternDemo {
+		public static void main(String[] args) {
+			ICameraFactory factory = new NikonCameraFactory();
+			ICamera camera = factory.createCamera();
+			camera.takePhoto();
+		}
+	}
+	
+Note: The advantage of using Factory pattern is that we code against interfaces. one thing we can improve in the above program is that we have hardcoded the instantiation of the NikonCameraFactory. It should be configurable. Let's create a jar file from the above and name it as cameralib.jar. create a configuration file say config.json like below.
+
+	{
+		"factoryType" : "sample.factorypattern.demo.CanonCameraFactory",
+		"location" : "file:///c:/lib/cameralib.jar"
+	}
+
+Write a Java class to read the configuration from a json file using jackson parser. Add the following dependency to your pom.xml
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.8.8</version>
+		</dependency>
+	
+Here is the java code:
+
+	import java.io.IOException;
+	import java.nio.charset.StandardCharsets;
+	import java.nio.file.FileSystems;
+	import java.nio.file.Files;
+	import java.nio.file.Path;
+	import com.fasterxml.jackson.databind.ObjectMapper;
+
+	public class Configuration {
+		private String factoryType;
+		private String location;
+		
+		public static Configuration loadConfiguration(String fileName) throws IOException{
+			Path path = FileSystems.getDefault().getPath(fileName);
+			String contents = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+			ObjectMapper mapper = new ObjectMapper();
+			Configuration config = mapper.readValue(contents, Configuration.class);
+			return config;
+		}
+
+		public String getFactoryType() {
+			return factoryType;
+		}
+
+		public void setFactoryType(String factoryType) {
+			this.factoryType = factoryType;
+		}
+
+		public String getLocation() {
+			return location;
+		}
+
+		public void setLocation(String location) {
+			this.location = location;
+		}
+	}
+
+Write the main java class to test the factory pattern using configuration:
+
+	try {
+		Configuration config = Configuration.loadConfiguration("C:\\Users\\damart1\\Documents\\evaluation_test\\sample\\src\\main\\resources\\config.json");
+		String location = config.getLocation();
+		URL url = new URL(location);
+		URLClassLoader classloader = new URLClassLoader(new URL[]{url});
+		@SuppressWarnings("unchecked")
+		Class<ICameraFactory> clazz=(Class<ICameraFactory>) Class.forName(config.getFactoryType(),true,classloader);
+		ICameraFactory factory = clazz.newInstance();
+		ICamera camera = factory.createCamera();
+		camera.takePhoto();
+		
+	} catch (IOException e) {
+		e.printStackTrace();
+	} catch (ClassNotFoundException e) {
+		e.printStackTrace();
+	} catch (InstantiationException e) {
+		e.printStackTrace();
+	} catch (IllegalAccessException e) {
+		e.printStackTrace();
+	}
+
+Note: The above code is highly configurable. i.e. If we make change in the factoryType property in json file and re run the above code, change will be reflected. So, no need to recompile the java code.
+
+Hot Deployement
+---------------
+Classloaders give the ability to reload classes dynamically. Classloaders can also load new classes into the application without having to unload the application.
+
+
+

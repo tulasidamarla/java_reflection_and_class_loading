@@ -1,7 +1,8 @@
-# java_reflection_and_class_loading
------------------------------------
+java_reflection_and_class_loading
+---------------------------------
 Understanding Classpath
 -----------------------
+
 To understand classpath, lets write two sample programs. A helper class and a main class in different packages like this.
 
 	package sample.helper;
@@ -241,7 +242,7 @@ Class loaders provide isolation. i.e. Two class loaders can load two different v
 
 Class.forName()
 ---------------
-Class.forName() loads the class by taking the name of the class as a parameter. It also has  additional parameter which takes a boolean value(whether to define the class or not) and a thrid parameter which takes a classloader to load the class with.
+Class.forName() loads the class by taking the name of the class as a parameter. It also has  additional parameter which takes a boolean value(whether to define the class or not means whether to verify if the class bytes are legal) and a thrid parameter which takes a classloader to load the class with.
 
 Here is an example:
 

@@ -20,14 +20,14 @@ To understand classpath, lets write two sample programs. A helper class and a ma
 		}
 	}	
 
-If you want to compile these classes into any custom directory(like classes) from command line here are the steps:
-1)javac -d classes -sourcepath src C:\Users\damart1\Documents\evaluation_test\sample\src\main\java\sample\helper\Helper.java
-2)Set classpath(set CLASSPATH=%CLASSPATH%;/path/to/classes) to the classes directory otherwise Main class will not be compiled because it can't find Helper.class. 
+If you want to compile these classes into any custom directory(like classes) from command line here are the steps:  
+1)javac -d classes -sourcepath src C:\Users\damart1\Documents\evaluation_test\sample\src\main\java\sample\helper\Helper.java  
+2)Set classpath(set CLASSPATH=%CLASSPATH%;/path/to/classes) to the classes directory otherwise Main class will not be compiled because it can't find Helper.class.  
 3)javac -d classes -sourcepath src C:\Users\damart1\Documents\evaluation_test\sample\src\main\java\sample\main\Main.java
 
 To run the main program, java sample.main.Main
 
-Note: -d to specify where to place generated class files.
+Note: -d to specify where to place generated class files.  
 	  -sourcepath to specify where to find input source files 
 *****
 Note: Setting classpath using the above command(step 2) globally is not a good idea, because it only exists for the current terminal window. There is a better way to do it using 'cp' argument like this for step 3.
@@ -38,10 +38,10 @@ To run the main program, java -cp classes sample.main.Main
 
 Note: Using cp command we can set multiple directories, jar files to classpath. In windows multiple locations/jar files are seperated with semicolon, in unix they are seperated by colon.
 
-Let's create a jar file using jar command.
-1)cd classes
-2)jar -cvf helper.jar /path/to/Helper.class
-3)copy it some directory say lib
+Let's create a jar file using jar command.  
+1)cd classes  
+2)jar -cvf helper.jar /path/to/Helper.class  
+3)copy it some directory say lib  
 4)remove Helper.class file
 
 Now, if we try to compile Main using step 3, we will get NoClassDefFoundError. we can compile Main using the below command.
@@ -50,12 +50,12 @@ javac -cp /path/to/classes;/path/to/lib/helper.jar -d classes -sourcepath src C:
 
 Basic concepts of class loading
 -------------------------------
-1)Core classes -- Classes present in java packages like java.lang,java.util etc.
-2)Extension classes -- Classes that oracle want to ship with java that should be part of every application but are not part of the core classes. Also, classes that are shipped through third party that has to be part of every java application but are not necessiarily core classes, for example we often find cryptography classes as part of extension classes.
+1)Core classes -- Classes present in java packages like java.lang,java.util etc.  
+2)Extension classes -- Classes that oracle want to ship with java that should be part of every application but are not part of the core classes. Also, classes that are shipped through third party that has to be part of every java application but are not necessiarily core classes, for example we often find cryptography classes as part of extension classes.  
 3)Delegation -- when a class loader first attempts to load a class it is typically delegated to what is known as parent class loader. Parent class loader is delegated to its parent class loader until some class loader can able to load.
 
-Note: In the classpath example above, we have seen that classes are loaded from classpath. Apart from this, there are two other locations from where classes are loaded.
-1)location of core classes, typically from /path/to/java/jdkorjre/lib/rt.jar(rt.jar is runtime jar which contains core java classes)
+Note: In the classpath example above, we have seen that classes are loaded from classpath. Apart from this, there are two other locations from where classes are loaded.  
+1)location of core classes, typically from /path/to/java/jdkorjre/lib/rt.jar(rt.jar is runtime jar which contains core java classes)  
 2)location of extension libaries, typically from /path/to/java/jdkorjre/lib/ext/
 
 Note: Unlike application classes, the above two are not required to be passed in the classpath.
@@ -66,16 +66,17 @@ Note: ext directory is present in both jdk and jre directories. Be sure which on
 
 ***
 Note: we can also set the ext directory explicitly using below command.
-java -cp classes -Djava.ext.dirs=c:\lib sample.main.Main
+	
+	java -cp classes -Djava.ext.dirs=c:\lib sample.main.Main
 
 Delegation
 ----------
 There is a hierarchy in class loaders. A class loader may delegate to it's parent class loader.
 Parent may load class. A class loader loads class only once. Once a class loader loads a class, it is cached. 
 
-Note: If we load a basic java console application, it works with 3 class loaders.
-1)Bootstrap: Written in C
-2)Extension
+Note: If we load a basic java console application, it works with 3 class loaders.  
+1)Bootstrap: Written in C  
+2)Extension  
 3)Application
 
 Application class loader asks to load a class to extension class loader. Extension class loader asks to load the class from bootstrap class loader.
@@ -159,15 +160,15 @@ java -cp /path/to/interfaces.jar sample.main.URLClassLoaderDemo
 
 Writing custom class loader
 ---------------------------
-When writing custom class loader few points need to be considered.
-1)custom classloader can't load all classes that application needs, it may delegate to the system classloader. (system classloader means to application, extension or bootstrap classloaders)
+When writing custom class loader few points need to be considered.  
+1)custom classloader can't load all classes that application needs, it may delegate to the system classloader. (system classloader means to application, extension or bootstrap classloaders)  
 2)If the system classloader can't load the class, then our custom classloader has to load the class bytes from the external location(either from DB or file system)
 
 Let's write an example which will load bytes from a file system. Few key points to note when writing custom classloader.
 
-1)Write a class that extends java.lang.ClassLoader and overwrite findClass() method.
-2)findClass() method should first give a chance to System classloader to load the class.
-3)If system classloader can't load the class, then load the class bytes from external location(file system, DB etc)
+1)Write a class that extends java.lang.ClassLoader and overwrite findClass() method.  
+2)findClass() method should first give a chance to System classloader to load the class.  
+3)If system classloader can't load the class, then load the class bytes from external location(file system, DB etc)  
 4)once bytes are loaded, invoke defineClass() method present in java.lang.ClassLoader
 
 Here is the code.
